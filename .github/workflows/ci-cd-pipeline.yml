@@ -13,23 +13,41 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker images
-  run: |
-    docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/vote:latest -f ./vote/Dockerfile ./vote
-    docker push ${{ secrets.DOCKERHUB_USERNAME }}/vote:latest
+      # Build & push VOTE
+      - name: Build & push vote
+        uses: docker/build-push-action@v5
+        with:
+          context: ./vote
+          file: ./vote/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/vote:latest
 
-    docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/result:latest -f ./result/Dockerfile ./result
-    docker push ${{ secrets.DOCKERHUB_USERNAME }}/result:latest
+      # Build & push RESULT
+      - name: Build & push result
+        uses: docker/build-push-action@v5
+        with:
+          context: ./result
+          file: ./result/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/result:latest
 
-    docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/worker:latest -f ./worker/Dockerfile ./worker
-    docker push ${{ secrets.DOCKERHUB_USERNAME }}/worker:latest
-
+      # Build & push WORKER
+      - name: Build & push worker
+        uses: docker/build-push-action@v5
+        with:
+          context: ./worker
+          file: ./worker/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/worker:latest
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
