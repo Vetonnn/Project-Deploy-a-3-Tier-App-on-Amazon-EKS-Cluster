@@ -22,6 +22,9 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Sanity-check Docker Hub namespace
+        run: echo "Pushing images to ${{ secrets.DOCKERHUB_USERNAME }}/<service>:latest"
+
       # Build & push VOTE
       - name: Build & push vote
         uses: docker/build-push-action@v5
@@ -58,8 +61,13 @@ jobs:
 
       - name: Install eksctl
         run: |
-          curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-          sudo mv /tmp/eksctl /usr/local/bin
+          curl -sSL "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
+          sudo mv /tmp/eksctl /usr/local/bin/eksctl
+
+      - name: Install kubectl
+        run: |
+          curl -sSL -o kubectl https://dl.k8s.io/release/$(curl -sSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl
+          sudo install -m 0755 kubectl /usr/local/bin/kubectl
 
       - name: Update kubeconfig
         run: eksctl utils write-kubeconfig --cluster ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
